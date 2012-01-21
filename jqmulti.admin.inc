@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * Admin form for jQuery Multi module
+ */
+function jqmulti_admin() {
+  $form = array();
+  
+  // this will rebuild the files list if they're not cached
+  jqmulti_get_files();
+  
+  $version_options = array_merge(array('none' => '- Select -') ,jqmulti_versions());
+  $form['jqmulti_version'] = array(
+    '#type' => 'select',
+    '#options' => $version_options,
+    '#default_value' => variable_get('jqmulti_version', 'none'),
+    '#title' => 'jQuery Version',
+    '#description' => t('Choose the second version of jQuery to load on this site'),
+    '#multiple' => FALSE,
+  );
+  
+  $form['jqmulti_load_always'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Load this jQuery library even if no libraries or files are assigned to it',
+    '#default_value' => variable_get('jqmulti_load_always', FALSE),
+    '#description' => t('Turn this on if you want to use the newer version of jQuery in custom scripts, using the alias provided'),
+  );
+  
+  // find all libraries that are turned on by the hook
+  $available_libraries = jqmulti_get_available_libraries();
+  
+  $form['jqmulti_libraries'] = array(
+    '#type' => 'checkboxes',
+    '#title' => 'Libraries',
+    '#options' => $available_libraries,
+    '#description' => t('Select libraries to target to the version of jQuery selected above'),
+    '#default_value' => variable_get('jqmulti_libraries', array()),
+  );
+  
+  $form['#after_build'] = array('jqmulti_admin_afterbuild');
+  $form['#submit'][] = 'jqmulti_admin_submit';
+
+  return system_settings_form($form);
+}
+
+function jqmulti_admin_afterbuild($form, &$form_state) {
+  // disable libraries that are turned on by hooks
+ $hooked_libraries = module_invoke_all('jqmulti_libraries');
+ $available_libraries = $form['jqmulti_libraries']['#options'];
+ foreach ($available_libraries as $library => $lib) {
+   if (in_array($library, $hooked_libraries)) {
+     $form['jqmulti_libraries'][$library]['#default_value'] = TRUE;
+     $form['jqmulti_libraries'][$library]['#value'] = TRUE;
+     $form['jqmulti_libraries'][$library]['#attributes']['disabled'] = 'disabled';
+   }
+ }
+ return $form;
+}
+
+function jqmulti_admin_submit($form, &$form_state) {
+  // clear the files cache, so it'll rebuild after new values are saved
+  cache_clear_all('jqmulti_files', 'cache');
+}

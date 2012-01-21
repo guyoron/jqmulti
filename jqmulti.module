@@ -1,0 +1,240 @@
+<?php
+
+/**
+ * @file 
+ */
+
+include('jqmulti.admin.inc');
+
+
+/**
+ * Implements hook_menu().
+ */
+function jqmulti_menu() {
+  $items = array();
+  $items['admin/settings/jqmulti'] = array(
+    'title' => t('jQuery Multi Settings'),
+    'description' => t('Settings for jQuery Multi module'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jqmulti_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+   );
+  return $items;
+}
+
+/**
+ * Implements hook_jquery_update_alter().
+ * This takes care of the alterations in the case that jQuery Update is installed
+ */
+function jqmulti_jquery_update_alter(&$scripts) {
+  $scripts = jqmulti_alter_scripts($scripts);
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ *
+ * - If jQuery Update is not present, it makes sure our preprocess function runs
+ *   after everything else. 
+ * - If jQuery Update is present, it removes our preprocess function, so that 
+ *   hook_jquery_update() can do the work.
+ */
+function jqmulti_theme_registry_alter(&$theme_registry) {
+  if (isset($theme_registry['page'])) {
+    if (count($theme_registry['page']['preprocess functions']) > 0) {
+      // If our preprocess function is there already, remove it.
+      if ($key = array_search('jqmulti_preprocess_page', $theme_registry['page']['preprocess functions'])) {
+        unset($theme_registry['page']['preprocess functions'][$key]);
+      }
+    }
+    // Now tack it on at the end so it runs after everything else.
+    if (!module_exists('jquery_update')) {
+      $theme_registry['page']['preprocess functions'][] = 'jqmulti_preprocess_page';
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ *
+ * Rearrange the scripts and add the new jQuery (only runs if jQuery Update is not present)
+ */
+function jqmulti_preprocess_page(&$variables) {
+  // Only do this for pages that have JavaScript on them.
+  if (!empty($variables['scripts'])) {
+    $scripts = drupal_add_js();
+    $scripts = jqmulti_alter_scripts($scripts);
+    $variables['scripts'] = drupal_get_js('header', $scripts);
+  }
+}
+
+/**
+ * This is where the magic happens. The new jQuery is added and noConflict() is run.
+ * Finally, scripts are rearranged or added so that the targeted scripts run with
+ * the newer jQuery
+ */
+function jqmulti_alter_scripts($scripts) {
+  $modulejs = &$scripts['module'];
+  $version = jqmulti_get_version();
+  $options = array(
+    'cache' => TRUE,
+    'defer' => FALSE,
+    'preprocess' => TRUE,
+  );
+  $prepend = array();
+  
+  // get info about which files are needed
+  $files = jqmulti_get_files();
+  if (empty($files)) {
+    if (!variable_get('jqmulti_load_always', FALSE)) return $scripts;
+  }
+  
+  // add the new version of jQuery
+  $jquery = jqmulti_jquery_path($version);
+  $prepend[$jquery] = $options;
+  
+  // rearrange JS array accordingly
+  foreach ($files as $file) {
+    // add the files
+    if (isset($modulejs[$file])) {
+      $prepend[$file] = $modulejs[$file];
+      unset($modulejs[$file]);
+    }
+    else {
+      $prepend[$file] = $options;
+    }
+  }
+      
+  // add the switch script to return jQuery to Drupal's default and save the new jQuery for later use
+  $switch = jqmulti_switch_path();
+  $prepend[$switch] = $options;
+  
+  // prepend the $prepend array
+  $modulejs = array_merge($prepend, $modulejs);
+  
+  return $scripts;
+}
+
+/**
+ * Returns a list of files that should be loaded with the second jQuery
+ */
+function jqmulti_get_files($reset = FALSE) {
+  // we store the file list in cache, since it's not going to change much
+  if (!$reset && $cache = cache_get('jqmulti_files')) return $cache->data;
+  else {
+    // build files array
+    $files = module_invoke_all('jqmulti_files');
+    if (!empty($files)) $files = array_combine($files, $files);
+    $libraries = module_invoke_all('jqmulti_libraries');
+    // get also any libraries added by UI
+    $ui_libs = variable_get('jqmulti_libraries', array());
+    foreach ($ui_libs as $ui_lib => $on) {
+      if ($on && !in_array($ui_lib, $libraries)) $libraries[] = $ui_lib;
+    }
+    // add library files
+    foreach ($libraries as $library) {
+      $files = array_merge($files, jqmulti_get_library_files($library));
+    }
+    cache_set('jqmulti_files', $files);
+    return $files;
+  }
+}
+
+/**
+ * Returns a list of files for a given library.
+ * This should really be a part of Libraries API, but it's not in D6 yet
+ */
+function jqmulti_get_library_files($library) {
+  $base_path = 'sites/all/libraries';
+  $path = $base_path . '/' . $library;
+  // check whether list of files is in cache
+  $cache = cache_get('jqmulti_files_' . $library);
+  
+  if ($cache) return $cache->data;
+  
+  // find list of js files for that library
+  $files = jqmulti_find_all_js_files($path);
+  cache_set('jqmulti_files_' . $library, $files);
+  return $files;
+}
+
+/**
+ * Returns available libraries to be used in the admin form
+ */
+function jqmulti_get_available_libraries() {
+  $libs = libraries_get_libraries();
+  foreach ($libs as $key => $value) {
+    $libs[$key] = $key;
+  }
+  return $libs;
+}
+
+/**
+ * Returns a list of available jQuery versions
+ *
+ * Just corresponds to the files that come with the module. Eventually,
+ * with CDN support, any version would be possible.
+ */
+function jqmulti_versions() {
+  return array(
+    '1.4.4' => '1.4.4',
+    '1.5.2' => '1.5.2',
+    '1.6'   => '1.6',
+    '1.6.4' => '1.6.4',
+    '1,7'   => '1.7',
+    '1.7.1' => '1.7.1',
+  );
+}
+
+
+/**
+ * Returns the path to the switch script
+ */
+function jqmulti_switch_path() {
+  return drupal_get_path('module', 'jqmulti') . '/js/switch.js';
+}
+
+/**
+ * Returns the path to a version of jQuery
+ */
+function jqmulti_jquery_path($version) {
+  return drupal_get_path('module', 'jqmulti') . '/jquery/jquery-' . $version . '.min.js';
+}
+
+/**
+ * Recursive function that returns a list of all JS files in a directory
+ */
+function jqmulti_find_all_js_files($dir) {
+  $root = scandir($dir);
+  foreach ($root as $value) {
+    if ($value === '.' || $value === '..') continue;
+    $path = "$dir/$value";
+    if (is_file($path)) {
+      if (preg_match('/.js$/', $value)) $result[$path] = $path;
+      continue;
+    }
+    foreach(jqmulti_find_all_js_files($path) as $value) {
+        $result[$value] = $value;
+    }
+  }
+  return $result;
+}
+
+/**
+ * Sets the version of jQuery to load
+ */
+function jqmulti_set_version($version) {
+  return variable_set('jqmulti_version', $version);
+}
+
+/**
+ * Gets the version of jQuery to load
+ */
+function jqmulti_get_version() {
+  return variable_get('jqmulti_version', NULL);
+}
+
+
+
+
+

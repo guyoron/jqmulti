@@ -1,0 +1,26 @@
+<?php
+
+
+/**
+ * Implements hook_install().
+ */
+function jqmulti_install() {
+  //
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function jqmulti_uninstall() {
+  $vars = array(
+    'version',
+    'libraries',
+    'load_always',
+  );
+  foreach ($vars as $var) {
+    variable_del('jqmulti_' . $var);
+  }
+  cache_clear_all('jqmulti_files', 'cache');
+}
+
