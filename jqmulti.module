@@ -75,13 +75,14 @@ function jqmulti_preprocess_page(&$variables) {
  */
 function jqmulti_alter_scripts($scripts) {
   $modulejs = &$scripts['module'];
-  $version = jqmulti_get_version();
   $options = array(
     'cache' => TRUE,
     'defer' => FALSE,
     'preprocess' => TRUE,
   );
   $prepend = array();
+  $jquery = jqmulti_jquery_path();
+  if (!$jquery) return $scripts;
   
   // get info about which files are needed
   $files = jqmulti_get_files();
@@ -90,7 +91,6 @@ function jqmulti_alter_scripts($scripts) {
   }
   
   // add the new version of jQuery
-  $jquery = jqmulti_jquery_path($version);
   $prepend[$jquery] = $options;
   
   // rearrange JS array accordingly
@@ -144,13 +144,11 @@ function jqmulti_get_files($reset = FALSE) {
  * Returns a list of files for a given library.
  * This should really be a part of Libraries API, but it's not in D6 yet
  */
-function jqmulti_get_library_files($library) {
+function jqmulti_get_library_files($library, $reset = FALSE) {
   $base_path = 'sites/all/libraries';
   $path = $base_path . '/' . $library;
   // check whether list of files is in cache
-  $cache = cache_get('jqmulti_files_' . $library);
-  
-  if ($cache) return $cache->data;
+  if (!$reset &&  $cache = cache_get('jqmulti_files_' . $library)) return $cache->data;
   
   // find list of js files for that library
   $files = jqmulti_find_all_js_files($path);
@@ -163,29 +161,12 @@ function jqmulti_get_library_files($library) {
  */
 function jqmulti_get_available_libraries() {
   $libs = libraries_get_libraries();
+  unset($libs['jquery']);
   foreach ($libs as $key => $value) {
     $libs[$key] = $key;
   }
   return $libs;
 }
-
-/**
- * Returns a list of available jQuery versions
- *
- * Just corresponds to the files that come with the module. Eventually,
- * with CDN support, any version would be possible.
- */
-function jqmulti_versions() {
-  return array(
-    '1.4.4' => '1.4.4',
-    '1.5.2' => '1.5.2',
-    '1.6'   => '1.6',
-    '1.6.4' => '1.6.4',
-    '1,7'   => '1.7',
-    '1.7.1' => '1.7.1',
-  );
-}
-
 
 /**
  * Returns the path to the switch script
@@ -195,10 +176,12 @@ function jqmulti_switch_path() {
 }
 
 /**
- * Returns the path to a version of jQuery
+ * Returns the path to the currently selected version of jQuery
  */
-function jqmulti_jquery_path($version) {
-  return drupal_get_path('module', 'jqmulti') . '/jquery/jquery-' . $version . '.min.js';
+function jqmulti_jquery_path() {
+  $version = jqmulti_get_version();
+  if ($version) return libraries_get_path('jquery') . '/jquery-' . $version . '.min.js';
+  return FALSE;
 }
 
 /**
@@ -221,20 +204,36 @@ function jqmulti_find_all_js_files($dir) {
 }
 
 /**
- * Sets the version of jQuery to load
+ * Gets the version of jQuery to load
  */
-function jqmulti_set_version($version) {
-  return variable_set('jqmulti_version', $version);
+function jqmulti_get_version($reset = FALSE) {
+  $libraries = libraries_get_libraries();
+  if (!isset($libraries['jquery'])) {
+    return FALSE;
+  }
+  else {
+    $files = jqmulti_get_library_files('jquery', $reset);
+    if (!$files) return FALSE;
+    foreach ($files as $file) {
+      // get the file name
+     $version = jqmulti_jquery_version_from_path($file);
+     if ($version) {
+       cache_set('jqmulti_version', $version);
+       return $version;
+     }
+    }
+  }
+  return FALSE;
 }
 
 /**
- * Gets the version of jQuery to load
+ * Helper function. Gets the jQuery version from the properly formatted filename
  */
-function jqmulti_get_version() {
-  return variable_get('jqmulti_version', NULL);
+function jqmulti_jquery_version_from_path($path) {
+  $filename = array_pop(explode('/', $path));
+  $matches = array();
+  preg_match('/jquery-(.*)\.min\.js/', $filename, $matches);
+  if (count($matches) == 2) return $matches[1];
+  else return FALSE;
 }
-
-
-
-
 

@@ -9,14 +9,21 @@ function jqmulti_admin() {
   // this will rebuild the files list if they're not cached
   jqmulti_get_files();
   
-  $version_options = array_merge(array('none' => '- Select -') ,jqmulti_versions());
+  $version = jqmulti_get_version();
+  
+  if (!$version) {
+    // no jQuery is available
+    $form['jqmulti_version'] = array(
+      '#value' => '<p>No jQuery library could be found. Please add a version of jQuery in the libraries folder (see README.txt for details)</p>',
+    );
+    
+    return $form;
+  }
+  
   $form['jqmulti_version'] = array(
-    '#type' => 'select',
-    '#options' => $version_options,
-    '#default_value' => variable_get('jqmulti_version', 'none'),
+    '#type' => 'item',
     '#title' => 'jQuery Version',
-    '#description' => t('Choose the second version of jQuery to load on this site'),
-    '#multiple' => FALSE,
+    '#value' => "Using jQuery version $version",
   );
   
   $form['jqmulti_load_always'] = array(
