@@ -2,9 +2,8 @@
 
 /**
  * @file 
+ * Code for the jQuery Multi module.
  */
-
-include('jqmulti.admin.inc');
 
 
 /**
@@ -16,16 +15,17 @@ function jqmulti_menu() {
     'title' => t('jQuery Multi Settings'),
     'description' => t('Settings for jQuery Multi module'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('jqmulti_admin'),
+    'page arguments' => array('jqmulti_admin_form'),
     'access arguments' => array('access administration pages'),
     'type' => MENU_NORMAL_ITEM,
+    'file' => 'jqmulti.admin.inc',
    );
   return $items;
 }
 
 /**
  * Implements hook_jquery_update_alter().
- * This takes care of the alterations in the case that jQuery Update is installed
+ * This takes care of the alterations in the case that jQuery Update is installed.
  */
 function jqmulti_jquery_update_alter(&$scripts) {
   $scripts = jqmulti_alter_scripts($scripts);
@@ -57,7 +57,7 @@ function jqmulti_theme_registry_alter(&$theme_registry) {
 /**
  * Implements hook_preprocess_page().
  *
- * Rearrange the scripts and add the new jQuery (only runs if jQuery Update is not present)
+ * Rearrange the scripts and add the new jQuery (only runs if jQuery Update is not present).
  */
 function jqmulti_preprocess_page(&$variables) {
   // Only do this for pages that have JavaScript on them.
@@ -71,7 +71,7 @@ function jqmulti_preprocess_page(&$variables) {
 /**
  * This is where the magic happens. The new jQuery is added and noConflict() is run.
  * Finally, scripts are rearranged or added so that the targeted scripts run with
- * the newer jQuery
+ * the newer jQuery.
  */
 function jqmulti_alter_scripts($scripts) {
   $modulejs = &$scripts['module'];
@@ -82,18 +82,22 @@ function jqmulti_alter_scripts($scripts) {
   );
   $prepend = array();
   $jquery = jqmulti_jquery_path();
-  if (!$jquery) return $scripts;
-  
-  // get info about which files are needed
-  $files = jqmulti_get_files();
-  if (empty($files)) {
-    if (!variable_get('jqmulti_load_always', FALSE)) return $scripts;
+  if (!$jquery) {
+    return $scripts;
   }
   
-  // add the new version of jQuery
+  // Get info about which files are needed.
+  $files = jqmulti_get_files();
+  if (empty($files)) {
+    if (!variable_get('jqmulti_load_always', FALSE)) {
+      return $scripts;
+    }
+  }
+  
+  // Add the new version of jQuery.
   $prepend[$jquery] = $options;
   
-  // rearrange JS array accordingly
+  // Rearrange JS array accordingly.
   foreach ($files as $file) {
     // add the files
     if (isset($modulejs[$file])) {
@@ -105,33 +109,35 @@ function jqmulti_alter_scripts($scripts) {
     }
   }
       
-  // add the switch script to return jQuery to Drupal's default and save the new jQuery for later use
+  // Add the switch script to return jQuery to Drupal's default and save the new jQuery for later use.
   $switch = jqmulti_switch_path();
   $prepend[$switch] = $options;
   
-  // prepend the $prepend array
+  // Prepend the $prepend array.
   $modulejs = array_merge($prepend, $modulejs);
   
   return $scripts;
 }
 
 /**
- * Returns a list of files that should be loaded with the second jQuery
+ * Returns a list of files that should be loaded with the second jQuery.
  */
 function jqmulti_get_files($reset = FALSE) {
-  // we store the file list in cache, since it's not going to change much
-  if (!$reset && $cache = cache_get('jqmulti_files')) return $cache->data;
+  // We store the file list in cache, since it's not going to change much.
+  if (!$reset && $cache = cache_get('jqmulti_files')) {
+    return $cache->data;
+  }
   else {
-    // build files array
+    // Build files array.
     $files = module_invoke_all('jqmulti_files');
     if (!empty($files)) $files = array_combine($files, $files);
     $libraries = module_invoke_all('jqmulti_libraries');
-    // get also any libraries added by UI
+    // Get also any libraries added by UI.
     $ui_libs = variable_get('jqmulti_libraries', array());
     foreach ($ui_libs as $ui_lib => $on) {
       if ($on && !in_array($ui_lib, $libraries)) $libraries[] = $ui_lib;
     }
-    // add library files
+    // Add library files.
     foreach ($libraries as $library) {
       $files = array_merge($files, jqmulti_get_library_files($library));
     }
@@ -142,14 +148,15 @@ function jqmulti_get_files($reset = FALSE) {
 
 /**
  * Returns a list of files for a given library.
- * This should really be a part of Libraries API, but it's not in D6 yet
+ * This is not a part of Libraries API for D6.
  */
 function jqmulti_get_library_files($library, $reset = FALSE) {
   $base_path = 'sites/all/libraries';
   $path = $base_path . '/' . $library;
   // check whether list of files is in cache
-  if (!$reset &&  $cache = cache_get('jqmulti_files_' . $library)) return $cache->data;
-  
+  if (!$reset &&  $cache = cache_get('jqmulti_files_' . $library)) {
+    return $cache->data;
+  }
   // find list of js files for that library
   $files = jqmulti_find_all_js_files($path);
   cache_set('jqmulti_files_' . $library, $files);
@@ -157,7 +164,7 @@ function jqmulti_get_library_files($library, $reset = FALSE) {
 }
 
 /**
- * Returns available libraries to be used in the admin form
+ * Returns available libraries to be used in the admin form.
  */
 function jqmulti_get_available_libraries() {
   $libs = libraries_get_libraries();
@@ -169,23 +176,26 @@ function jqmulti_get_available_libraries() {
 }
 
 /**
- * Returns the path to the switch script
+ * Returns the path to the switch script.
  */
 function jqmulti_switch_path() {
   return drupal_get_path('module', 'jqmulti') . '/js/switch.js';
 }
 
 /**
- * Returns the path to the currently selected version of jQuery
+ * Returns the path to the currently selected version of jQuery.
  */
 function jqmulti_jquery_path() {
   $version = jqmulti_get_version();
-  if ($version) return libraries_get_path('jquery') . '/jquery-' . $version . '.min.js';
+  if ($version) {
+    return libraries_get_path('jquery') . '/jquery-' . $version . '.min.js';
+  }
   return FALSE;
 }
 
 /**
- * Recursive function that returns a list of all JS files in a directory
+ * Recursive function that returns a list of all JS files in a directory.
+ * @param $dir the full path to the directory
  */
 function jqmulti_find_all_js_files($dir) {
   $root = scandir($dir);
@@ -193,7 +203,9 @@ function jqmulti_find_all_js_files($dir) {
     if ($value === '.' || $value === '..') continue;
     $path = "$dir/$value";
     if (is_file($path)) {
-      if (preg_match('/.js$/', $value)) $result[$path] = $path;
+      if (preg_match('/.js$/', $value)) {
+        $result[$path] = $path;
+      }
       continue;
     }
     foreach(jqmulti_find_all_js_files($path) as $value) {
@@ -204,36 +216,40 @@ function jqmulti_find_all_js_files($dir) {
 }
 
 /**
- * Gets the version of jQuery to load
+ * Gets the version of jQuery to load.
+ * @param $reset whether to reset the cached version number
  */
 function jqmulti_get_version($reset = FALSE) {
   $libraries = libraries_get_libraries();
-  if (!isset($libraries['jquery'])) {
-    return FALSE;
-  }
-  else {
+  if (isset($libraries['jquery'])) {
     $files = jqmulti_get_library_files('jquery', $reset);
-    if (!$files) return FALSE;
-    foreach ($files as $file) {
-      // get the file name
-     $version = jqmulti_jquery_version_from_path($file);
-     if ($version) {
-       cache_set('jqmulti_version', $version);
-       return $version;
-     }
+    if ($files) {
+      foreach ($files as $file) {
+        // Get the file name.
+       $version = jqmulti_jquery_version_from_path($file);
+       if ($version) {
+         cache_set('jqmulti_version', $version);
+         return $version;
+       }
+      }
     }
   }
   return FALSE;
 }
 
 /**
- * Helper function. Gets the jQuery version from the properly formatted filename
+ * Gets the jQuery version from the properly formatted filename.
+ * @param $path the full path to the jQuery library file
  */
 function jqmulti_jquery_version_from_path($path) {
   $filename = array_pop(explode('/', $path));
   $matches = array();
   preg_match('/jquery-(.*)\.min\.js/', $filename, $matches);
-  if (count($matches) == 2) return $matches[1];
-  else return FALSE;
+  if (count($matches) == 2) {
+    return $matches[1];
+  }
+  else {
+    return FALSE;
+  }
 }
 

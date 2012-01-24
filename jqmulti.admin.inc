@@ -1,12 +1,17 @@
 <?php
 
 /**
- * Admin form for jQuery Multi module
+ * @file 
+ * Admin-related functions for the jQuery Multi module.
  */
-function jqmulti_admin() {
+
+/**
+ * Admin form for jQuery Multi module.
+ */
+function jqmulti_admin_form() {
   $form = array();
   
-  // this will rebuild the files list if they're not cached
+  // This will rebuild the files list if they're not cached.
   jqmulti_get_files();
   
   $version = jqmulti_get_version();
@@ -14,7 +19,7 @@ function jqmulti_admin() {
   if (!$version) {
     // no jQuery is available
     $form['jqmulti_version'] = array(
-      '#value' => '<p>No jQuery library could be found. Please add a version of jQuery in the libraries folder (see README.txt for details)</p>',
+      '#value' => t('No jQuery library could be found. Please add a version of jQuery in the libraries folder (see README.txt for details)'),
     );
     
     return $form;
@@ -23,17 +28,17 @@ function jqmulti_admin() {
   $form['jqmulti_version'] = array(
     '#type' => 'item',
     '#title' => 'jQuery Version',
-    '#value' => "Using jQuery version $version",
+    '#value' => t('Using jQuery version %version', array('%version' => $version)),
   );
   
   $form['jqmulti_load_always'] = array(
     '#type' => 'checkbox',
-    '#title' => 'Load this jQuery library even if no libraries or files are assigned to it',
+    '#title' => t('Load this jQuery library even if no libraries or files are assigned to it'),
     '#default_value' => variable_get('jqmulti_load_always', FALSE),
     '#description' => t('Turn this on if you want to use the newer version of jQuery in custom scripts, using the alias provided'),
   );
   
-  // find all libraries that are turned on by the hook
+  // Find all libraries that are turned on by the hook.
   $available_libraries = jqmulti_get_available_libraries();
   
   $form['jqmulti_libraries'] = array(
@@ -50,6 +55,9 @@ function jqmulti_admin() {
   return system_settings_form($form);
 }
 
+/**
+ * An after_build callback for the admin form.
+ */
 function jqmulti_admin_afterbuild($form, &$form_state) {
   // disable libraries that are turned on by hooks
  $hooked_libraries = module_invoke_all('jqmulti_libraries');
@@ -64,6 +72,9 @@ function jqmulti_admin_afterbuild($form, &$form_state) {
  return $form;
 }
 
+/**
+ * Submit callback for the admin form.
+ */
 function jqmulti_admin_submit($form, &$form_state) {
   // clear the files cache, so it'll rebuild after new values are saved
   cache_clear_all('jqmulti_files', 'cache');

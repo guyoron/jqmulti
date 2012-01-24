@@ -1,13 +1,9 @@
 <?php
 
-include_once(drupal_get_path('module', 'jqmulti') . '/jqmulti.module');
-
 /**
- * Implements hook_enable().
+ * @file 
+ * Install file for the jQuery Multi module.
  */
-function jqmulti_enable() {
-  //
-}
 
 
 /**
@@ -30,6 +26,7 @@ function jqmulti_uninstall() {
  * Implements hook_requirements().
  */
 function jqmulti_requirements($phase) {
+  module_load_include('module', 'jqmulti');
   $requirements = array();
   $requirements['jqmulti_jquery'] = array(
     'title' => 'jQuery Multi jQuery library',
@@ -46,7 +43,6 @@ function jqmulti_requirements($phase) {
         $requirements['jqmulti_jquery']['value'] = $version;
         $requirements['jqmulti_jquery']['severity'] = REQUIREMENT_OK;
       }
-      break;
   }
   return $requirements;
 }

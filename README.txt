@@ -23,40 +23,23 @@ Usage:
   
   You can also use this module in the following ways:
 
----------------------------------
-
-  Use the provided hooks to add libraries or files that should be loaded with the newer jQuery:
+  - Use the provided hooks to add files or libraries to load with jQuery Multi (see jqmulti.api.php)
+  - Use the automatically provided jQuery alias in your custom scripts:
   
-  function hook_jqmulti_files() {
-    return array(
-      'full/path/to/file.js',
-      'full/path/to/another/file.js',
-    );
-  }
+      Use the version of jQuery loaded by jQuery Multi in your custom scripts by referencing
+      the automatically provided alias in your script closure. The alias names are
+      generated using the jQuery version number, with the periods removed.
   
-  function hook_jqmulti_libraries() {
-    return array(
-      'library_name',
-      'another_library',
-    );
-  }
+      For instance, if you're loading jQuery-1.7.1, the alias will be jq171, and you can
+      use it in your scripts by wrapping your code as follows:
+  
+      (function($){
+        // your code here, using jQuery 1.7.1
+      })(jq171)
+  
   
   NOTE: loading libraries with Jquery Multi will only load the JS files within the library. You must
   call drupal_add_css() separately to load any included CSS files that may be in the library.
-
----------------------------------
-
-  You can also use the second jQuery in your custom scripts simply by referencing
-  the automatically provided alias in your script closure. The alias names are
-  generated using the jQuery version number, with the periods removed.
-  
-  For instance, if you're loading jQuery-1.7.1, the alias will be: jq171, and you can
-  use it in your scripts by wrapping your code as follows:
-  
-  (function($){
-    // your code here, using jQuery 1.7.1
-  })(jq171)
-
 
 
 TODO:
