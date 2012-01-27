@@ -1,5 +1,5 @@
 name = jQuery Multi
 description = Runs a second version of jQuery in parallel to Drupal's version, and allows for targeting of files and libraries to the second version.
 core = 7.x
-
+configure = admin/config/system/jqmulti
 dependencies[] = libraries
