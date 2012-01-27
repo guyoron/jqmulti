@@ -49,12 +49,19 @@ function jqmulti_admin_form() {
     '#default_value' => variable_get('jqmulti_libraries', array()),
   );
   
-  $hooked_libraries = module_invoke_all('jqmulti_libraries');
-  foreach ($available_libraries as $library => $lib) {
-    if (in_array($library, $hooked_libraries)) {
-      $form['jqmulti_libraries'][$library]['#default_value'] = TRUE;
-      $form['jqmulti_libraries'][$library]['#attributes']['disabled'] = 'disabled';
-      $form['jqmulti_libraries'][$library]['#description'] = t('Enabled by a module using hook_jqmulti_libraries()');
+  // Disable the checkboxes for libraries that are enabled by hooks.
+  foreach (module_implements('jqmulti_libraries') as $module) {
+    $libraries = module_invoke($module, 'jqmulti_libraries');
+    foreach ($libraries as $library) {
+      // Only do this once, in case multiple modules require the same library.
+      if (empty($form['jqmulti_libraries'][$library]['#description'])) {
+        $form['jqmulti_libraries'][$library]['#default_value'] = TRUE;
+        $form['jqmulti_libraries'][$library]['#attributes']['disabled'] = 'disabled';
+        $form['jqmulti_libraries'][$library]['#description'] = t('Required by %module', array('%module' => $module));
+      }
+      else {
+        $form['jqmulti_libraries'][$library]['#description'] .= t(', %module', array('%module' => $module));
+      }
     }
   }
   
