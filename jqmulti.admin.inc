@@ -49,27 +49,18 @@ function jqmulti_admin_form() {
     '#default_value' => variable_get('jqmulti_libraries', array()),
   );
   
-  $form['#after_build'] = array('jqmulti_admin_afterbuild');
+  $hooked_libraries = module_invoke_all('jqmulti_libraries');
+  foreach ($available_libraries as $library => $lib) {
+    if (in_array($library, $hooked_libraries)) {
+      $form['jqmulti_libraries'][$library]['#default_value'] = TRUE;
+      $form['jqmulti_libraries'][$library]['#attributes']['disabled'] = 'disabled';
+      $form['jqmulti_libraries'][$library]['#description'] = t('Enabled by a module using hook_jqmulti_libraries()');
+    }
+  }
+  
   $form['#submit'][] = 'jqmulti_admin_submit';
 
   return system_settings_form($form);
-}
-
-/**
- * An after_build callback for the admin form.
- */
-function jqmulti_admin_afterbuild($form, &$form_state) {
-  // disable libraries that are turned on by hooks
- $hooked_libraries = module_invoke_all('jqmulti_libraries');
- $available_libraries = $form['jqmulti_libraries']['#options'];
- foreach ($available_libraries as $library => $lib) {
-   if (in_array($library, $hooked_libraries)) {
-     $form['jqmulti_libraries'][$library]['#default_value'] = TRUE;
-     $form['jqmulti_libraries'][$library]['#value'] = TRUE;
-     $form['jqmulti_libraries'][$library]['#attributes']['disabled'] = 'disabled';
-   }
- }
- return $form;
 }
 
 /**
