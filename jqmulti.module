@@ -5,13 +5,32 @@
  * Code for the jQuery Multi module.
  */
 
+/**
+ * Just for testing
+ */
+function jqmulti_jqmulti_files() {
+  return array(
+    drupal_get_path('module', 'jqmulti') . '/js/test.js',
+  );
+}
+
+/**
+ * 
+ */
+function jqmulti_jqmulti_libraries() {
+  return array(
+    'qtip',
+  );
+}
+
+drupal_add_css('sites/all/libraries/qtip' . '/jquery.qtip.min.css');
 
 /**
  * Implements hook_menu().
  */
 function jqmulti_menu() {
   $items = array();
-  $items['admin/settings/jqmulti'] = array(
+  $items['admin/config/system/jqmulti'] = array(
     'title' => t('jQuery Multi Settings'),
     'description' => t('Settings for jQuery Multi module'),
     'page callback' => 'drupal_get_form',
@@ -24,63 +43,14 @@ function jqmulti_menu() {
 }
 
 /**
- * Implements hook_jquery_update_alter().
- * This takes care of the alterations in the case that jQuery Update is installed.
- */
-function jqmulti_jquery_update_alter(&$scripts) {
-  $scripts = jqmulti_alter_scripts($scripts);
-}
-
-/**
- * Implements hook_theme_registry_alter().
+ * Implements hook_js_alter().
  *
- * - If jQuery Update is not present, it makes sure our preprocess function runs
- *   after everything else. 
- * - If jQuery Update is present, it removes our preprocess function, so that 
- *   hook_jquery_update() can do the work.
- */
-function jqmulti_theme_registry_alter(&$theme_registry) {
-  if (isset($theme_registry['page'])) {
-    if (count($theme_registry['page']['preprocess functions']) > 0) {
-      // If our preprocess function is there already, remove it.
-      if ($key = array_search('jqmulti_preprocess_page', $theme_registry['page']['preprocess functions'])) {
-        unset($theme_registry['page']['preprocess functions'][$key]);
-      }
-    }
-    // Now tack it on at the end so it runs after everything else.
-    if (!module_exists('jquery_update')) {
-      $theme_registry['page']['preprocess functions'][] = 'jqmulti_preprocess_page';
-    }
-  }
-}
-
-/**
- * Implements hook_preprocess_page().
- *
- * Rearrange the scripts and add the new jQuery (only runs if jQuery Update is not present).
- */
-function jqmulti_preprocess_page(&$variables) {
-  // Only do this for pages that have JavaScript on them.
-  if (!empty($variables['scripts'])) {
-    $scripts = drupal_add_js();
-    $scripts = jqmulti_alter_scripts($scripts);
-    $variables['scripts'] = drupal_get_js('header', $scripts);
-  }
-}
-
-/**
  * This is where the magic happens. The new jQuery is added and noConflict() is run.
  * Finally, scripts are rearranged or added so that the targeted scripts run with
  * the newer jQuery.
  */
-function jqmulti_alter_scripts($scripts) {
-  $modulejs = &$scripts['module'];
-  $options = array(
-    'cache' => TRUE,
-    'defer' => FALSE,
-    'preprocess' => TRUE,
-  );
-  $prepend = array();
+function jqmulti_js_alter(&$javascript) {
+  
   $jquery = jqmulti_jquery_path();
   if (!$jquery) {
     return $scripts;
@@ -90,33 +60,26 @@ function jqmulti_alter_scripts($scripts) {
   $files = jqmulti_get_files();
   if (empty($files)) {
     if (!variable_get('jqmulti_load_always', FALSE)) {
-      return $scripts;
+      return;
     }
   }
   
-  // Add the new version of jQuery.
-  $prepend[$jquery] = $options;
-  
-  // Rearrange JS array accordingly.
-  foreach ($files as $file) {
-    // add the files
-    if (isset($modulejs[$file])) {
-      $prepend[$file] = $modulejs[$file];
-      unset($modulejs[$file]);
-    }
-    else {
-      $prepend[$file] = $options;
-    }
-  }
-      
-  // Add the switch script to return jQuery to Drupal's default and save the new jQuery for later use.
+  // Add jQuery and the switch script to the $files array
   $switch = jqmulti_switch_path();
-  $prepend[$switch] = $options;
+  $files = array_merge(array($jquery => $jquery), $files, array($switch => $switch));
   
-  // Prepend the $prepend array.
-  $modulejs = array_merge($prepend, $modulejs);
-  
-  return $scripts;
+  // Rearrange / Add JS
+  $group = -50;
+  $weight = -100;
+  foreach ($files as $file) {
+    if (!isset($javascript[$file])) {
+      $javascript[$file] = drupal_js_defaults();
+      $javascript[$file]['data'] = $file;
+    }
+    $javascript[$file]['group'] = $group;
+    $javascript[$file]['weight'] = $weight;
+    $weight++;
+  }
 }
 
 /**
@@ -242,7 +205,8 @@ function jqmulti_get_version($reset = FALSE) {
  * @param $path the full path to the jQuery library file
  */
 function jqmulti_jquery_version_from_path($path) {
-  $filename = array_pop(explode('/', $path));
+  $parts = explode('/', $path);
+  $filename = array_pop($parts);
   $matches = array();
   preg_match('/jquery-(.*)\.min\.js/', $filename, $matches);
   if (count($matches) == 2) {

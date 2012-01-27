@@ -28,7 +28,7 @@ function jqmulti_admin_form() {
   $form['jqmulti_version'] = array(
     '#type' => 'item',
     '#title' => 'jQuery Version',
-    '#value' => t('Using jQuery version %version', array('%version' => $version)),
+    '#markup' => t('Using jQuery version %version', array('%version' => $version)),
   );
   
   $form['jqmulti_load_always'] = array(
