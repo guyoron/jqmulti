@@ -145,6 +145,7 @@ function jqmulti_jquery_path() {
  * @param $dir the full path to the directory
  */
 function jqmulti_find_all_js_files($dir) {
+  $result = array();
   $root = scandir($dir);
   foreach ($root as $value) {
     if ($value === '.' || $value === '..') {
