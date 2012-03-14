@@ -4,27 +4,7 @@
  * @file 
  * Code for the jQuery Multi module.
  */
-
-/**
- * Just for testing
- */
-function jqmulti_jqmulti_files() {
-  return array(
-    drupal_get_path('module', 'jqmulti') . '/js/test.js',
-  );
-}
-
-/**
- * 
- */
-function jqmulti_jqmulti_libraries() {
-  return array(
-    'qtip',
-  );
-}
-
-drupal_add_css('sites/all/libraries/qtip' . '/jquery.qtip.min.css');
-
+ 
 /**
  * Implements hook_menu().
  */
