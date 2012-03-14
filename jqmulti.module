@@ -73,12 +73,16 @@ function jqmulti_get_files($reset = FALSE) {
   else {
     // Build files array.
     $files = module_invoke_all('jqmulti_files');
-    if (!empty($files)) $files = array_combine($files, $files);
+    if (!empty($files)) {
+      $files = array_combine($files, $files);
+    }
     $libraries = module_invoke_all('jqmulti_libraries');
     // Get also any libraries added by UI.
     $ui_libs = variable_get('jqmulti_libraries', array());
     foreach ($ui_libs as $ui_lib => $on) {
-      if ($on && !in_array($ui_lib, $libraries)) $libraries[] = $ui_lib;
+      if ($on && !in_array($ui_lib, $libraries)) {
+        $libraries[] = $ui_lib;
+      }
     }
     // Add library files.
     foreach ($libraries as $library) {
@@ -143,7 +147,9 @@ function jqmulti_jquery_path() {
 function jqmulti_find_all_js_files($dir) {
   $root = scandir($dir);
   foreach ($root as $value) {
-    if ($value === '.' || $value === '..') continue;
+    if ($value === '.' || $value === '..') {
+      continue;
+    }
     $path = "$dir/$value";
     if (is_file($path)) {
       if (preg_match('/.js$/', $value)) {
@@ -151,7 +157,7 @@ function jqmulti_find_all_js_files($dir) {
       }
       continue;
     }
-    foreach(jqmulti_find_all_js_files($path) as $value) {
+    foreach (jqmulti_find_all_js_files($path) as $value) {
         $result[$value] = $value;
     }
   }
