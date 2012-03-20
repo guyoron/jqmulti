@@ -33,7 +33,7 @@ function jqmulti_js_alter(&$javascript) {
   
   $jquery = jqmulti_jquery_path();
   if (!$jquery) {
-    return $scripts;
+    return;
   }
   
   // Get info about which files are needed.
