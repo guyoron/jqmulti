@@ -8,7 +8,9 @@
 
 Need to use a higher version of jQuery for your module or theme than the one provided by Drupal/jQuery Update?
 
-jQuery Multi allows you to load an extra version of the jQuery library in parallel to Drupal's version, without conflicting with Drupal's version. You can then choose any JavaScript library or files to use the new version of jQuery. No need to alter packaged jQuery plugins!
+jQuery Multi allows you to load an extra version of the jQuery library in parallel to Drupal's version, without 
+conflicting with Drupal's version. You can then choose any JavaScript library or files to use the new version
+of jQuery. No need to alter packaged jQuery plugins!
 
 -- INSTALLATION --
 
