@@ -242,7 +242,8 @@ function jqmulti_get_version($reset = FALSE) {
  * @param $path the full path to the jQuery library file
  */
 function jqmulti_jquery_version_from_path($path) {
-  $filename = array_pop(explode('/', $path));
+  $parts = explode('/', $path);
+  $filename = array_pop($parts);
   $matches = array();
   preg_match('/jquery-(.*)\.min\.js/', $filename, $matches);
   if (count($matches) == 2) {
