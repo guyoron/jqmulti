@@ -26,7 +26,7 @@ function jqmulti_uninstall() {
  * Implements hook_requirements().
  */
 function jqmulti_requirements($phase) {
-  module_load_include('module', 'jqmulti');
+  require_once dirname(__FILE__) . '/jqmulti.module';
   $requirements = array();
   $requirements['jqmulti_jquery'] = array(
     'title' => 'jQuery Multi jQuery library',
@@ -34,14 +34,16 @@ function jqmulti_requirements($phase) {
   switch ($phase) {
     case 'install':
     case 'runtime':
-      $version = jqmulti_get_version(TRUE);
-      if (!$version) {
-        $requirements['jqmulti_jquery']['description'] = 'jQuery Multi: Could not locate a jQuery library. Please look at the README for instructions and ensure you have placed the library correctly.';
-        $requirements['jqmulti_jquery']['severity'] = REQUIREMENT_ERROR;
-      }
-      else {
-        $requirements['jqmulti_jquery']['value'] = $version;
-        $requirements['jqmulti_jquery']['severity'] = REQUIREMENT_OK;
+      if (function_exists('libraries_get_path')) {
+        $version = jqmulti_get_version(TRUE);
+        if (!$version) {
+          $requirements['jqmulti_jquery']['description'] = 'jQuery Multi: Could not locate a jQuery library. Please look at the README for instructions and ensure you have placed the library correctly.';
+          $requirements['jqmulti_jquery']['severity'] = REQUIREMENT_ERROR;
+        }
+        else {
+          $requirements['jqmulti_jquery']['value'] = $version;
+          $requirements['jqmulti_jquery']['severity'] = REQUIREMENT_OK;
+        }
       }
   }
   return $requirements;
