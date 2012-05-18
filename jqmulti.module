@@ -31,8 +31,8 @@ function jqmulti_menu() {
  */
 function jqmulti_js_alter(&$javascript) {
   
-  $jquery = jqmulti_jquery_path();
-  if (!$jquery) {
+  $jquery_path = jqmulti_jquery_path();
+  if (!$jquery_path) {
     return;
   }
   
@@ -45,20 +45,31 @@ function jqmulti_js_alter(&$javascript) {
   }
   
   // Add jQuery and the switch script to the $files array
-  $switch = jqmulti_switch_path();
-  $files = array_merge(array($jquery => $jquery), $files, array($switch => $switch));
+  $switch_path = jqmulti_switch_path();
+  $switch_options = array(
+    'weight' => 100,
+    'group' => -49,
+  );
+  $jquery_options = array(
+    'weight' => -100,
+    'group' => -51,
+  );
+  $files = array_merge(array($jquery_path => $jquery_options), $files, array($switch_path => $switch_options));
   
   // Rearrange / Add JS
-  $group = -50;
-  $weight = -100;
-  foreach ($files as $file) {
-    if (!isset($javascript[$file])) {
+  $default_group = -50;
+  $default_weight = 0;
+  foreach ($files as $file => $options) {
+    if (!in_array($file, $javascript)) {
       $javascript[$file] = drupal_js_defaults();
       $javascript[$file]['data'] = $file;
     }
-    $javascript[$file]['group'] = $group;
-    $javascript[$file]['weight'] = $weight;
-    $weight++;
+    $javascript[$file]['group'] = isset($options['group']) ? $options['group'] : $default_group;
+    $javascript[$file]['weight'] = isset($options['weight']) ? $options['weight'] : $default_weight;
+    // We increment the default weight, to ensure that files that don't have specified weight are
+    // included in the order they were added. But we only increment a bit so as to not generate a 
+    // large weight range that might be confusing to deal with for other modules setting weights of files.
+    $default_weight += 0.01;
   }
 }
 
@@ -73,21 +84,35 @@ function jqmulti_get_files($reset = FALSE) {
   else {
     // Build files array.
     $files = module_invoke_all('jqmulti_files');
-    if (!empty($files)) {
-      $files = array_combine($files, $files);
-    }
     $libraries = module_invoke_all('jqmulti_libraries');
     // Get also any libraries added by UI.
     $ui_libs = variable_get('jqmulti_libraries', array());
     foreach ($ui_libs as $ui_lib => $on) {
-      if ($on && !in_array($ui_lib, $libraries)) {
-        $libraries[] = $ui_lib;
+      if ($on && !in_array($ui_lib, array_keys($libraries))) {
+        $libraries[$ui_lib] = array();
       }
     }
     // Add library files.
-    foreach ($libraries as $library) {
-      $files = array_merge($files, jqmulti_get_library_files($library));
+    foreach ($libraries as $library => $options) {
+      $lib_files = jqmulti_get_library_files($library);
+      $lib_files_temp = array();
+      foreach ($lib_files as $lib_file) {
+        $lib_files_temp[$lib_file] = $options;
+      }
+      $files = array_merge($files, $lib_files_temp);
+      
     }
+    // Make all files keys in the array.
+    $temp_files = array();
+    foreach ($files as $key => $value) {
+      if (is_array($value)) {
+        $temp_files[$key] = $value;
+      }
+      else {
+        $temp_files[$value] = array();
+      }
+    }
+    $files = $temp_files;
     cache_set('jqmulti_files', $files);
     return $files;
   }
@@ -154,12 +179,12 @@ function jqmulti_find_all_js_files($dir) {
     $path = "$dir/$value";
     if (is_file($path)) {
       if (preg_match('/.js$/', $value)) {
-        $result[$path] = $path;
+        $result[] = $path;
       }
       continue;
     }
     foreach (jqmulti_find_all_js_files($path) as $value) {
-        $result[$value] = $value;
+        $result[] = $value;
     }
   }
   return $result;
