@@ -46,3 +46,10 @@ function jqmulti_requirements($phase) {
   }
   return $requirements;
 }
+
+/**
+ * Refresh the files listing.
+ */
+function jqmulti_update_7101() {
+  jqmulti_get_files(TRUE);
+}
