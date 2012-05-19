@@ -81,41 +81,39 @@ function jqmulti_get_files($reset = FALSE) {
   if (!$reset && $cache = cache_get('jqmulti_files')) {
     return $cache->data;
   }
-  else {
-    // Build files array.
-    $files = module_invoke_all('jqmulti_files');
-    $libraries = module_invoke_all('jqmulti_libraries');
-    // Get also any libraries added by UI.
-    $ui_libs = variable_get('jqmulti_libraries', array());
-    foreach ($ui_libs as $ui_lib => $on) {
-      if ($on && !in_array($ui_lib, array_keys($libraries))) {
-        $libraries[$ui_lib] = array();
-      }
+  // Build files array.
+  $files = module_invoke_all('jqmulti_files');
+  $libraries = module_invoke_all('jqmulti_libraries');
+  // Get also any libraries added by UI.
+  $ui_libs = variable_get('jqmulti_libraries', array());
+  foreach ($ui_libs as $ui_lib => $on) {
+    if ($on && !in_array($ui_lib, array_keys($libraries))) {
+      $libraries[$ui_lib] = array();
     }
-    // Add library files.
-    foreach ($libraries as $library => $options) {
-      $lib_files = jqmulti_get_library_files($library);
-      $lib_files_temp = array();
-      foreach ($lib_files as $lib_file) {
-        $lib_files_temp[$lib_file] = $options;
-      }
-      $files = array_merge($files, $lib_files_temp);
-      
-    }
-    // Make all files keys in the array.
-    $temp_files = array();
-    foreach ($files as $key => $value) {
-      if (is_array($value)) {
-        $temp_files[$key] = $value;
-      }
-      else {
-        $temp_files[$value] = array();
-      }
-    }
-    $files = $temp_files;
-    cache_set('jqmulti_files', $files);
-    return $files;
   }
+  // Add library files.
+  foreach ($libraries as $library => $options) {
+    $lib_files = jqmulti_get_library_files($library);
+    $lib_files_temp = array();
+    foreach ($lib_files as $lib_file) {
+      $lib_files_temp[$lib_file] = $options;
+    }
+    $files = array_merge($files, $lib_files_temp);
+    
+  }
+  // Make all files keys in the array.
+  $temp_files = array();
+  foreach ($files as $key => $value) {
+    if (is_array($value)) {
+      $temp_files[$key] = $value;
+    }
+    else {
+      $temp_files[$value] = array();
+    }
+  }
+  $files = $temp_files;
+  cache_set('jqmulti_files', $files);
+  return $files;
 }
 
 /**
