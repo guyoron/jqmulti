@@ -5,6 +5,15 @@
  * Install file for the jQuery Multi module.
  */
 
+/**
+ * Implements hook_enable().
+ */
+function jqmulti_enable() {
+  // Check for jQuery Update and warn if not compatible
+  if (module_exists('jquery_update') && !function_exists('jquery_update_jquery_update_alter')) {
+    drupal_set_message(t('The version of jQuery Update installed is not compatible with jQuery Multi. In order to use jQuery Multi you need to update jQuery Update to the latest development release.'), 'warning');
+  }
+}
 
 /**
  * Implements hook_uninstall().
