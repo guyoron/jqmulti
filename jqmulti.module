@@ -88,6 +88,12 @@ function jqmulti_alter_scripts($scripts) {
   
   // Get info about which files are needed.
   $files = jqmulti_get_files();
+
+  // Check if we need to add libraries even if they have not been explicitly added.
+  if (!variable_get('jqmulti_load_libraries_always', FALSE)) {
+    $files = array_intersect_key($files, $modulejs);
+  }
+  // If there are no files, check if we are to add jQuery anyway.
   if (empty($files)) {
     if (!variable_get('jqmulti_load_always', FALSE)) {
       return $scripts;
