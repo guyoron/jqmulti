@@ -23,6 +23,7 @@ function jqmulti_uninstall() {
     'version',
     'libraries',
     'load_always',
+    'load_libraries_always',
   );
   foreach ($vars as $var) {
     variable_del('jqmulti_' . $var);
@@ -56,4 +57,25 @@ function jqmulti_requirements($phase) {
       }
   }
   return $requirements;
+}
+
+/**
+ * Enable the new 'Always load libraries and files' option, to ensure the module's
+ * behavior is not changed.
+ */
+function jqmulti_update_6101() {
+  /*
+  * Set the default value for the new option to include libraries assigned to the
+  * jqmulti jQuery library on all pages automatically.
+  *
+  * The logical setting for this on new sites is disabled. However,
+  * this is enabled to mimic existing functionality, so existing
+  * sites aren't unexpectedly affected.
+  */
+  variable_set('jqmulti_load_libraries_always', TRUE);
+  // Display a message to the user to alert them to this new setting.
+  drupal_set_message(t('The jqmulti module previously always included all its files and libraries on every page. This is now an option you can disable, so you can load JS selectively only on some pages.') . '<br />' .
+                     t('This has been enabled for you so that the module functions exactly as it did before.') . '<br />' .
+                     t('You may choose to disable this at the <a href="@url">jqmulti admin settings page</a>.', array('@url' => url('admin/config/system/jqmulti'))));
+  return;
 }

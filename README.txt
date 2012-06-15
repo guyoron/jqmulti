@@ -25,19 +25,19 @@ of jQuery. No need to alter packaged jQuery plugins!
   3. Ensure that your jQuery library has been detected.
   
   4. To target certain JavaScript files to run with the jQuery Multi version, choose
-     one of the following methods:
+     one of the following methods (Methods A-C do not require changing any JS, and so are
+     ideal when using a prepackaged jQuery library):
+  
+    NOTE:  If you want the library or files to load on every page load, use the 'Always load libraries
+           and files' option. Otherwise you must load them explicitly using drupal_add_js() or a similar method.
   
     A) Put the JS in sites/all/libraries/ and use the UI at admin/settings/jqmulti
-       to select your library. All the library's JS files will be loaded with the jqmulti jQuery version. 
-       There is no need to use the alias in this case. This is ideal if you're using a 
-       prepackaged jQuery library or plugin.
-    B) Put the JS in sites/all/libraries/ and use hook_jqmulti_libraries() to include the library.
-       No need to use the alias. This is ideal if you're using a prepackaged jQuery library or plugin,
-       and is equivalent to method A.
-    C) Put the JS anywhere else, like in a custom module, and use hook_jqmulti_files() to load it. No need to use the alias.
-    D) Put the JS anywhere, use the provided alias, and don't use the jqmulti hooks or UI. Simply load 
-       with drupal_add_js() or something similar. If you're only using this method, make sure to select
-       the 'Load Always' checkbox in the jQuery Multi config.
+       to target your library to jqmulti. There is no need to use the alias in this case.
+    B) Put the JS in sites/all/libraries/ and use hook_jqmulti_libraries() to target the library.
+       No need to use the alias. This is equivalent to method A.
+    C) Put the JS anywhere else, like in a custom module, and target it using hook_jqmulti_files(). No need to use the alias.
+    D) Put the JS anywhere and target it using the provided alias. Don't use the jqmulti hooks or UI.
+       If you're only using this method, make sure to select the 'Always load jQuery' checkbox in the jQuery Multi config.
 
         To use the automatically provided jQuery alias in your custom scripts:
   
@@ -61,4 +61,3 @@ of jQuery. No need to alter packaged jQuery plugins!
             (function($){
               // your code here, using jQuery 1.7.1
             })(jQuery)
-

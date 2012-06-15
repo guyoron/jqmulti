@@ -33,11 +33,20 @@ function jqmulti_admin_form() {
   
   $form['jqmulti_load_always'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Load this jQuery library even if no libraries or files are assigned to it'),
+    '#title' => t('Always load this jQuery library, even if no libraries or files are targeted to it'),
     '#default_value' => variable_get('jqmulti_load_always', FALSE),
     '#description' => t('Turn this on if you want to use the newer version of jQuery in custom scripts, using the alias provided'),
   );
-  
+
+  $form['jqmulti_load_libraries_always'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Always load libraries assigned to this version of jQuery'),
+    '#default_value' => variable_get('jqmulti_load_libraries_always', FALSE),
+    '#description' => t('Turn this on if you want all libraries and files targeted to jqmulti to be loaded on every page.') . '<br />' .
+                      t('Otherwise, the files will only be loaded if they have been added using a traditional drupal method, for example with drupal_add_js().') . '<br />' .
+                      t('This affects javascript added using the settings below, and using the jqmulti API hooks.'),
+  );
+
   // Find all libraries that are turned on by the hook.
   $available_libraries = jqmulti_get_available_libraries();
   
